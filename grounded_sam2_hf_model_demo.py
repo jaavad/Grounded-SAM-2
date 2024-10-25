@@ -160,28 +160,33 @@ def single_mask_to_rle(mask):
     rle["counts"] = rle["counts"].decode("utf-8")
     return rle
 
+
 if DUMP_JSON_RESULTS:
-    # convert mask into rle format
+    # Convert masks into RLE format
     mask_rles = [single_mask_to_rle(mask) for mask in masks]
 
+    # Convert necessary data to lists for JSON serialization
     input_boxes = input_boxes.tolist()
     scores = scores.tolist()
-    # save the results in standard format
+
+    # Save results in standard format
     results = {
         "image_path": img_path,
         "annotations" : [
             {
                 "class_name": class_name,
+                "my_detection_score": detection_score,  # Grounding DINO confidence score
                 "bbox": box,
                 "segmentation": mask_rle,
-                "score": score,
+                "score": score,  # SAM2 score
             }
-            for class_name, box, mask_rle, score in zip(class_names, input_boxes, mask_rles, scores)
+            for class_name, detection_score, box, mask_rle, score in zip(class_names, confidences, input_boxes, mask_rles, scores)
         ],
         "box_format": "xyxy",
         "img_width": image.width,
         "img_height": image.height,
     }
     
+    # Write JSON file with the updated structure
     with open(os.path.join(OUTPUT_DIR, "grounded_sam2_hf_model_demo_results.json"), "w") as f:
         json.dump(results, f, indent=4)
